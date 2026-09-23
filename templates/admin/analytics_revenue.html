@@ -1,0 +1,200 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+<!-- Use CanvasJS (more reliable than Chart.js) -->
+<script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+<style>
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+        margin: 20px 0;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .no-data {
+        padding: 50px;
+        text-align: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>💰 Revenue Analytics</h1>
+        <div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">← Back to Dashboard</a>
+            <a href="{% url 'export_csv_report' %}?type=revenue" class="btn btn-success">📥 Export CSV</a>
+        </div>
+    </div>
+
+    <!-- Revenue Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h5>📈 Revenue Trends</h5>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" id="revenueChartContainer">
+                <div id="revenueChart" style="height: 100%; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Data Table -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>📊 Revenue Data</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Revenue</th>
+                            <th>Bookings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in revenue_data %}
+                        <tr>
+                            <td>{{ item.date|date:"M d, Y" }}</td>
+                            <td><strong>₹{{ item.revenue|floatformat:2 }}</strong></td>
+                            <td>{{ item.count }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">No data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Wait for page to load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Revenue Chart Initializing with CanvasJS...');
+    
+    // Get the data
+    var revenueData = {{ revenue_data|safe }};
+    console.log('📊 Data:', revenueData);
+    
+    // Check if data exists
+    if (!revenueData || revenueData.length === 0) {
+        document.getElementById('revenueChartContainer').innerHTML = 
+            '<div class="no-data"><h4>📭 No Data Available</h4></div>';
+        return;
+    }
+    
+    // Check if CanvasJS is loaded
+    if (typeof CanvasJS === 'undefined') {
+        console.error('❌ CanvasJS not loaded!');
+        document.getElementById('revenueChartContainer').innerHTML = 
+            '<div class="alert alert-danger">CanvasJS library not loaded. Please check internet connection.</div>';
+        return;
+    }
+    
+    // Prepare data for Revenue chart
+    var revenueDataPoints = [];
+    var bookingDataPoints = [];
+    
+    for (var i = 0; i < revenueData.length; i++) {
+        var item = revenueData[i];
+        var date = new Date(item.date);
+        var label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        revenueDataPoints.push({
+            label: label,
+            y: parseFloat(item.revenue) || 0
+        });
+        
+        bookingDataPoints.push({
+            label: label,
+            y: item.count || 0
+        });
+    }
+    
+    console.log('📊 Revenue Data Points:', revenueDataPoints);
+    console.log('📊 Booking Data Points:', bookingDataPoints);
+    
+    try {
+        var chart = new CanvasJS.Chart("revenueChart", {
+            animationEnabled: true,
+            title: {
+                text: "Revenue & Bookings Trends"
+            },
+            axisX: {
+                title: "Date",
+                interval: 1,
+                labelAngle: -30
+            },
+            axisY: {
+                title: "Revenue (₹)",
+                includeZero: true,
+                prefix: "₹",
+                titleFontColor: "#4F81BC"
+            },
+            axisY2: {
+                title: "Bookings",
+                includeZero: true,
+                titleFontColor: "#C0504E"
+            },
+            toolTip: {
+                shared: true
+            },
+            legend: {
+                cursor: "pointer",
+                itemclick: function(e) {
+                    if (typeof(e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                        e.dataSeries.visible = false;
+                    } else {
+                        e.dataSeries.visible = true;
+                    }
+                    chart.render();
+                }
+            },
+            data: [{
+                type: "column",
+                name: "Revenue",
+                axisYType: "primary",
+                showInLegend: true,
+                color: "#4F81BC",
+                dataPoints: revenueDataPoints
+            },
+            {
+                type: "line",
+                name: "Bookings",
+                axisYType: "secondary",
+                showInLegend: true,
+                color: "#C0504E",
+                markerType: "circle",
+                markerColor: "#C0504E",
+                markerSize: 8,
+                dataPoints: bookingDataPoints
+            }]
+        });
+        
+        chart.render();
+        console.log('✅ Revenue chart created successfully!');
+        
+    } catch (error) {
+        console.error('❌ Chart error:', error);
+        document.getElementById('revenueChartContainer').innerHTML = 
+            '<div class="alert alert-danger">Error creating chart: ' + error.message + '</div>';
+    }
+});
+</script>
+{% endblock %}

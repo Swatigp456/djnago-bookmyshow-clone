@@ -1,0 +1,170 @@
+{% extends "users/basic.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-history"></i> Payment History</h2>
+    
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h5>Total Payments</h5>
+                            <h3>{{ payments.count }}</h3>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Successful</h5>
+                            <h3 class="text-success">
+                                {% with success=payments|length %}
+                                    {{ payments|length }}
+                                {% endwith %}
+                            </h3>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Failed</h5>
+                            <h3 class="text-danger">
+                                {{ payments|length }}
+                            </h3>
+                        </div>
+                        <div class="col-md-3">
+                            <h5>Total Amount</h5>
+                            <h3 class="text-primary">
+                                ₹{{ payments|length }}
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <select class="form-select" onchange="filterPayments(this.value)">
+                <option value="">All Payments</option>
+                <option value="SUCCESS">Successful</option>
+                <option value="FAILED">Failed</option>
+                <option value="PENDING">Pending</option>
+                <option value="CANCELLED">Cancelled</option>
+                <option value="REFUNDED">Refunded</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Payment List -->
+    {% for payment in payments %}
+        <div class="card mb-3 payment-card" data-status="{{ payment.payment_status }}">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center">
+                            <div class="payment-icon me-3">
+                                {% if payment.payment_status == 'SUCCESS' %}
+                                    <i class="fas fa-check-circle text-success fa-2x"></i>
+                                {% elif payment.payment_status == 'FAILED' %}
+                                    <i class="fas fa-times-circle text-danger fa-2x"></i>
+                                {% elif payment.payment_status == 'PENDING' %}
+                                    <i class="fas fa-clock text-warning fa-2x"></i>
+                                {% elif payment.payment_status == 'CANCELLED' %}
+                                    <i class="fas fa-ban text-secondary fa-2x"></i>
+                                {% elif payment.payment_status == 'REFUNDED' %}
+                                    <i class="fas fa-undo text-info fa-2x"></i>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <h6 class="mb-1">
+                                    {{ payment.booking.show.movie.name }}
+                                    <span class="badge bg-{% if payment.payment_status == 'SUCCESS' %}success{% elif payment.payment_status == 'FAILED' %}danger{% elif payment.payment_status == 'PENDING' %}warning{% elif payment.payment_status == 'CANCELLED' %}secondary{% else %}info{% endif %} ms-2">
+                                        {{ payment.get_payment_status_display }}
+                                    </span>
+                                </h6>
+                                <p class="mb-0 text-muted small">
+                                    <i class="fas fa-calendar-alt"></i> {{ payment.created_at|date:"M d, Y H:i" }}
+                                    &nbsp;|&nbsp;
+                                    <i class="fas fa-ticket-alt"></i> {{ payment.booking.seats }} seats
+                                    &nbsp;|&nbsp;
+                                    <i class="fas fa-credit-card"></i> {{ payment.get_payment_method_display }}
+                                </p>
+                                {% if payment.razorpay_payment_id %}
+                                    <p class="mb-0 text-muted small">
+                                        <i class="fas fa-hashtag"></i> Transaction ID: {{ payment.razorpay_payment_id }}
+                                    </p>
+                                {% endif %}
+                                {% if payment.failure_reason %}
+                                    <p class="mb-0 text-danger small">
+                                        <i class="fas fa-exclamation-triangle"></i> {{ payment.failure_reason }}
+                                    </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <h5 class="mb-1 {% if payment.payment_status == 'SUCCESS' %}text-success{% else %}text-muted{% endif %}">
+                            ₹{{ payment.amount }}
+                        </h5>
+                        {% if payment.payment_status == 'PENDING' %}
+                            <a href="{% url 'initiate_payment' payment.booking.id %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-redo"></i> Retry Payment
+                            </a>
+                            <button onclick="cancelPayment({{ payment.id }})" class="btn btn-sm btn-danger">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        {% endif %}
+                        {% if payment.booking %}
+                            <a href="{% url 'movie_detail' payment.booking.show.movie.id %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-film"></i> View Movie
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle"></i> No payment history found.
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<script>
+    function filterPayments(value) {
+        const cards = document.querySelectorAll('.payment-card');
+        cards.forEach(card => {
+            if (!value || card.dataset.status === value) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    function cancelPayment(paymentId) {
+        if (!confirm('Are you sure you want to cancel this payment?')) return;
+        
+        fetch(`/movies/payment/cancel/${paymentId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+    
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+</script>
+{% endblock %}

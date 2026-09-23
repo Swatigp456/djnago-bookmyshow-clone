@@ -11,7 +11,7 @@
                     <h5 class="mb-0">🔍 Filters</h5>
                 </div>
                 <div class="card-body">
-                    <form method="GET" action="{% url 'movie_list' %}" id="filterForm">
+                    <form method="GET" action="{% url 'movie_discovery' %}" id="filterForm">
                         <!-- Search -->
                         <div class="mb-3">
                             <label class="form-label">Search</label>
@@ -20,28 +20,28 @@
                                    value="{{ search_query }}">
                         </div>
 
-                        <!-- ============================================ -->
-                        <!-- GENRE FILTER - ADDED -->
-                        <!-- ============================================ -->
+                        <!-- Genres -->
                         <div class="mb-3">
                             <label class="form-label">Genres</label>
-                            <input type="text" name="genres" class="form-control" 
-                                   placeholder="e.g., Action, Drama, Sci-Fi" 
-                                   value="{{ selected_genres }}">
-                            <small class="text-muted">Separate multiple genres with commas</small>
+                            <select name="genres" class="form-select" multiple size="4">
+                                {% for genre in filter_options.genres %}
+                                <option value="{{ genre.id }}" 
+                                    {% if genre.id|stringformat:"s" in selected_genres %}selected{% endif %}>
+                                    {{ genre.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Hold Ctrl to select multiple</small>
                         </div>
 
-                        <!-- ============================================ -->
-                        <!-- LANGUAGE FILTER - ADDED -->
-                        <!-- ============================================ -->
+                        <!-- Languages -->
                         <div class="mb-3">
-                            <label class="form-label">Language</label>
-                            <select name="language" class="form-select">
-                                <option value="">All Languages</option>
-                                {% for lang in filter_options.languages %}
-                                <option value="{{ lang }}" 
-                                    {% if lang == selected_language %}selected{% endif %}>
-                                    {{ lang }}
+                            <label class="form-label">Languages</label>
+                            <select name="languages" class="form-select" multiple size="3">
+                                {% for language in filter_options.languages %}
+                                <option value="{{ language.id }}"
+                                    {% if language.id|stringformat:"s" in selected_languages %}selected{% endif %}>
+                                    {{ language.name }}
                                 </option>
                                 {% endfor %}
                             </select>
@@ -107,7 +107,7 @@
                         <!-- Sort -->
                         <div class="mb-3">
                             <label class="form-label">Sort By</label>
-                            <select name="sort" class="form-select">
+                            <select name="sort" class="form-select" onchange="this.form.submit()">
                                 <option value="popularity" {% if sort_by == 'popularity' %}selected{% endif %}>Popularity</option>
                                 <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
                                 <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Rating</option>
@@ -117,7 +117,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
-                        <a href="{% url 'movie_list' %}" class="btn btn-secondary w-100 mt-2">Clear All</a>
+                        <a href="{% url 'movie_discovery' %}" class="btn btn-secondary w-100 mt-2">Clear All</a>
                     </form>
                 </div>
             </div>
@@ -131,12 +131,6 @@
                 <div>
                     {% if search_query %}
                     <span class="badge bg-info">Search: {{ search_query }}</span>
-                    {% endif %}
-                    {% if selected_genres %}
-                    <span class="badge bg-success">Genres: {{ selected_genres }}</span>
-                    {% endif %}
-                    {% if selected_language %}
-                    <span class="badge bg-primary">Language: {{ selected_language }}</span>
                     {% endif %}
                     <span class="badge bg-secondary">{{ movies|length }} shown</span>
                 </div>
@@ -152,17 +146,10 @@
                         <div class="card h-100">
                             {% if movie.image %}
                             <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 100px; object-fit: cover;">
-                            {% else %}
-                            <div style="height: 100px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
-                                {{ movie.name|slice:":2"|upper }}
-                            </div>
                             {% endif %}
                             <div class="card-body p-2">
                                 <h6 class="card-title small">{{ movie.name|truncatechars:15 }}</h6>
                                 <small class="text-muted">⭐ {{ movie.rating }}</small>
-                                {% if movie.genres %}
-                                <small class="text-muted d-block">{{ movie.genres|truncatechars:20 }}</small>
-                                {% endif %}
                             </div>
                             <div class="card-footer p-1">
                                 <a href="{% url 'movie_detail' movie.id %}" class="btn btn-sm btn-outline-primary w-100">View</a>
@@ -184,17 +171,10 @@
                         <div class="card h-100 border-warning">
                             {% if movie.image %}
                             <img src="{{ movie.image.url }}" class="card-img-top" alt="{{ movie.name }}" style="height: 100px; object-fit: cover;">
-                            {% else %}
-                            <div style="height: 100px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: bold;">
-                                {{ movie.name|slice:":2"|upper }}
-                            </div>
                             {% endif %}
                             <div class="card-body p-2">
                                 <h6 class="card-title small">{{ movie.name|truncatechars:15 }}</h6>
                                 <small class="text-muted">⭐ {{ movie.rating }}</small>
-                                {% if movie.genres %}
-                                <small class="text-muted d-block">{{ movie.genres|truncatechars:20 }}</small>
-                                {% endif %}
                             </div>
                             <div class="card-footer p-1">
                                 <a href="{% url 'movie_detail' movie.id %}" class="btn btn-sm btn-outline-warning w-100">View</a>
@@ -224,23 +204,12 @@
                                 <span class="text-warning">⭐</span> {{ movie.rating }}
                                 <small class="text-muted">| {{ movie.release_date|date:"Y" }}</small>
                             </div>
-                            {% if movie.genres %}
-                            <small class="text-muted d-block"><i class="fas fa-tags"></i> {{ movie.genres }}</small>
-                            {% endif %}
-                            {% if movie.language %}
-                            <small class="text-muted d-block"><i class="fas fa-language"></i> {{ movie.language }}</small>
-                            {% endif %}
                             {% if movie.director %}
-                            <small class="text-muted d-block"><i class="fas fa-user"></i> {{ movie.director }}</small>
-                            {% endif %}
-                            {% if movie.city %}
-                            <small class="text-muted d-block"><i class="fas fa-city"></i> {{ movie.city }}</small>
+                            <small class="text-muted d-block">{{ movie.director }}</small>
                             {% endif %}
                         </div>
                         <div class="card-footer bg-white border-top-0">
-                            <a href="{% url 'movie_detail' movie.id %}" class="btn btn-sm btn-primary w-100">
-                                View Details <i class="fas fa-chevron-right"></i>
-                            </a>
+                            <a href="{% url 'movie_detail' movie.id %}" class="btn btn-sm btn-primary w-100">View Details</a>
                         </div>
                     </div>
                 </div>
@@ -249,7 +218,6 @@
                     <div class="alert alert-info">
                         <h5>No movies found matching your criteria</h5>
                         <p>Try adjusting your filters or search terms</p>
-                        <a href="{% url 'movie_list' %}" class="btn btn-primary">Clear Filters</a>
                     </div>
                 </div>
                 {% endfor %}
@@ -287,8 +255,30 @@
     </div>
 </div>
 
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<script>
+// Live filter update - show count without page reload
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const inputs = filterForm.querySelectorAll('input, select');
+    
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // For select multiple, we need to handle differently
+            if (input.tagName === 'SELECT' && input.multiple) {
+                // Don't auto-submit for multi-select
+                return;
+            }
+            // Submit form on change for single select and inputs
+            if (input.type !== 'text' || input.name === 'search') {
+                // Don't auto-submit search, let user press enter or click button
+            }
+        });
+    });
+    
+    // Update movie count on filter change via AJAX
+    // This is handled by the server-side rendering
+});
+</script>
 
 <style>
     .card {
@@ -301,17 +291,5 @@
     .card-header.bg-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    .badge {
-        font-size: 0.8rem;
-    }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Auto-submit on sort change
-    document.querySelector('select[name="sort"]').addEventListener('change', function() {
-        document.getElementById('filterForm').submit();
-    });
-});
-</script>
 {% endblock %}

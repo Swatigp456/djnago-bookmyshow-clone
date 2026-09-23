@@ -1,0 +1,125 @@
+{% extends "users/basic.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-ticket-alt"></i> Book Tickets</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Movie Details -->
+                    <div class="movie-info mb-4 p-3 bg-light rounded">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4>{{ show.movie.name }}</h4>
+                                <p class="mb-1"><strong>Theater:</strong> {{ show.screen.theater.name }}</p>
+                                <p class="mb-1"><strong>Screen:</strong> {{ show.screen.screen_number }}</p>
+                                <p class="mb-1"><strong>Date:</strong> {{ show.show_date|date:"M d, Y" }}</p>
+                                <p class="mb-1"><strong>Time:</strong> {{ show.show_time|time:"g:i A" }}</p>
+                                <p class="mb-0"><strong>Price:</strong> ₹{{ show.price }} per seat</p>
+                            </div>
+                            <div class="col-md-4 text-center d-flex align-items-center justify-content-center">
+                                <div class="availability-box p-3 rounded bg-success text-white">
+                                    <h2 class="mb-0">{{ available_seats }}</h2>
+                                    <small>Seats Available</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Smart Seat Selection Button -->
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        <strong>Smart Seat Selection Available!</strong> 
+                        Use our interactive seat map to select your preferred seats with live availability.
+                    </div>
+
+                    <div class="text-center">
+                        <a href="{% url 'seat_selection' show.id %}" class="btn btn-success btn-lg w-100 mb-2">
+                            <i class="fas fa-chair"></i> Select Seats with Live Map
+                        </a>
+                        <p class="text-muted small">
+                            <i class="fas fa-clock"></i> Seats will be reserved for 2 minutes
+                            <br>
+                            <i class="fas fa-lock"></i> Secure and real-time availability
+                        </p>
+                    </div>
+
+                    <hr>
+
+                    <!-- Quick Booking Form -->
+                    <div class="quick-booking">
+                        <h5 class="mb-3">Quick Booking (Select Number of Seats)</h5>
+                        <p class="text-muted small">This will randomly assign available seats.</p>
+                        
+                        <form method="POST">
+                            {% csrf_token %}
+                            {% for field in form %}
+                                <div class="mb-3">
+                                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="text-danger">{{ field.errors }}</div>
+                                    {% endif %}
+                                    <small class="text-muted">Choose 1-10 seats</small>
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-check"></i> Confirm Booking
+                            </button>
+                            <!-- ✅ FIXED: Goes back to book_ticket page, not theater_list -->
+                            <a href="{% url 'book_ticket' show.id %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<style>
+    .availability-box {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        padding: 15px 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        min-width: 100px;
+    }
+    .availability-box h2 {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .movie-info {
+        border-left: 4px solid #007bff;
+    }
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        transition: all 0.3s ease;
+    }
+    .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+    }
+    .quick-booking {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    }
+    .card {
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}

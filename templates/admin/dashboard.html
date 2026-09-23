@@ -1,0 +1,168 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+<style>
+    .dashboard-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        cursor: pointer;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .nav-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 10px 0;
+        border-left: 4px solid #007bff;
+        transition: all 0.3s;
+        text-decoration: none;
+        color: #333;
+        display: block;
+    }
+    .nav-card:hover {
+        background: #f8f9fa;
+        border-left-color: #0056b3;
+        text-decoration: none;
+        color: #333;
+        transform: translateX(5px);
+    }
+    .nav-card .icon {
+        font-size: 24px;
+        margin-right: 15px;
+    }
+    .nav-card .title {
+        font-weight: 600;
+        font-size: 16px;
+    }
+    .nav-card .description {
+        color: #6c757d;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">Home</a> &rsaquo; Dashboard
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="mb-4">📊 Admin Dashboard</h1>
+    
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Revenue</h5>
+                    <h2>₹{{ summary.total_revenue|floatformat:2 }}</h2>
+                    <small>₹{{ summary.daily_revenue|floatformat:2 }} today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Bookings</h5>
+                    <h2>{{ summary.total_bookings }}</h2>
+                    <small>{{ summary.today_bookings }} today</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title">Active Users</h5>
+                    <h2>{{ summary.active_users }}</h2>
+                    <small>Registered users</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark dashboard-card">
+                <div class="card-body">
+                    <h5 class="card-title">Occupancy Rate</h5>
+                    <h2>{{ summary.overall_occupancy }}%</h2>
+                    <small>Overall theater occupancy</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analytics Cards Navigation -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>📋 Analytics Reports</h5>
+                    <small>Click on any card to view detailed analytics</small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{% url 'analytics_revenue' %}" class="nav-card">
+                                <div>
+                                    <span class="icon">💰</span>
+                                    <span class="title">Revenue Analytics</span>
+                                    <div class="description">Daily, weekly, monthly revenue trends with charts</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{% url 'analytics_occupancy' %}" class="nav-card" style="border-left-color: #28a745;">
+                                <div>
+                                    <span class="icon">🏛️</span>
+                                    <span class="title">Theater Occupancy</span>
+                                    <div class="description">Occupancy rates for each theater with status indicators</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{% url 'analytics_top_movies' %}" class="nav-card" style="border-left-color: #17a2b8;">
+                                <div>
+                                    <span class="icon">🎬</span>
+                                    <span class="title">Top Movies</span>
+                                    <div class="description">Most booked movies with revenue and rating data</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{% url 'analytics_peak_hours' %}" class="nav-card" style="border-left-color: #ffc107;">
+                                <div>
+                                    <span class="icon">⏰</span>
+                                    <span class="title">Peak Hours</span>
+                                    <div class="description">Hourly booking distribution and peak times</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{% url 'analytics_cancellations' %}" class="nav-card" style="border-left-color: #dc3545;">
+                                <div>
+                                    <span class="icon">❌</span>
+                                    <span class="title">Cancellations & Refunds</span>
+                                    <div class="description">Cancellation rates and refund statistics</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-md-6 col-lg-4">
+                            <a href="{% url 'analytics_users' %}" class="nav-card" style="border-left-color: #6f42c1;">
+                                <div>
+                                    <span class="icon">👥</span>
+                                    <span class="title">User Growth</span>
+                                    <div class="description">User registration trends and growth analysis</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

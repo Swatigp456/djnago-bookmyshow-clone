@@ -1,0 +1,91 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🏛️ Theater Occupancy</h1>
+        <div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">← Back to Dashboard</a>
+            <a href="{% url 'export_csv_report' %}?type=occupancy" class="btn btn-success">📥 Export CSV</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Occupancy Rates</h5>
+        </div>
+        <div class="card-body">
+            <canvas id="occupancyChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>Theater Details</h5>
+        </div>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Theater</th>
+                        <th>Capacity</th>
+                        <th>Bookings</th>
+                        <th>Occupancy</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for theater in occupancy_data %}
+                    <tr>
+                        <td>{{ theater.theater_name }}</td>
+                        <td>{{ theater.total_capacity }}</td>
+                        <td>{{ theater.total_bookings }}</td>
+                        <td>{{ theater.occupancy_rate }}%</td>
+                        <td>
+                            {% if theater.occupancy_rate > 70 %}
+                                <span class="badge bg-success">High</span>
+                            {% elif theater.occupancy_rate > 40 %}
+                                <span class="badge bg-warning">Medium</span>
+                            {% else %}
+                                <span class="badge bg-danger">Low</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5">No occupancy data available</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+const ctx = document.getElementById('occupancyChart').getContext('2d');
+const data = {{ occupancy_data|safe }};
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: data.map(i => i.theater_name || ''),
+        datasets: [{
+            label: 'Occupancy Rate (%)',
+            data: data.map(i => i.occupancy_rate || 0),
+            backgroundColor: data.map(i => i.occupancy_rate > 70 ? 'rgba(40,167,69,0.7)' : i.occupancy_rate > 40 ? 'rgba(255,193,7,0.7)' : 'rgba(220,53,69,0.7)'),
+            borderColor: 'rgba(0,0,0,0.1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: { beginAtZero: true, max: 100 }
+        }
+    }
+});
+</script>
+{% endblock %}

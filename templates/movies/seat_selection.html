@@ -1,170 +1,243 @@
-{% extends "users/basic.html" %} {% block content %}
-<div class="container mt-5">
-  <div class="row">
-    <div class="col-lg-8 mx-auto">
-      <!-- Movie and Theater Info -->
-      <div class="card mb-4">
-        <div class="card-body">
-          <div
-            class="d-flex justify-content-between align-items-center flex-wrap"
-          >
-            <div>
-              <h4 class="card-title">{{ theaters.movie.name }}</h4>
-              <p class="card-text text-muted">
-                {{ theaters.name }} | {{ theaters.time }}
-              </p>
+{% extends "users/basic.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h4>{{ show.movie.name }}</h4>
+                    <p>{{ show.screen.theater.name }} | {{ show.show_date|date:"M d, Y" }} at {{ show.show_time|time:"g:i A" }}</p>
+                    <p><strong>Price:</strong> ₹{{ show.price }} per seat</p>
+                    <p><strong>Available Seats:</strong> <span id="available-count">{{ available_count }}</span></p>
+                </div>
             </div>
-            <div class="mt-2 mt-sm-0">
-              <button class="btn btn-outline-primary me-2 mb-2 mb-sm-0">
-                2D
-              </button>
-              <button class="btn btn-outline-primary me-2 mb-2 mb-sm-0">
-                3D
-              </button>
-              <button class="btn btn-outline-primary mb-2 mb-sm-0">
-                IMAX 3D
-              </button>
-              <button class="btn btn-outline-primary mb-2 mb-sm-0">
-                {{seats|length}} Tickets
-              </button>
+
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="text-center mb-4">Select Your Seats</h5>
+                    
+                    <div class="text-center bg-dark text-white py-2 rounded mb-4" style="letter-spacing: 8px; font-size: 18px;">
+                        SCREEN
+                    </div>
+
+                    <div class="d-flex justify-content-center mb-4 flex-wrap">
+                        <div class="d-flex align-items-center me-3">
+                            <div style="width: 30px; height: 30px; background: #28a745; border-radius: 5px;"></div>
+                            <span class="ms-2">Available</span>
+                        </div>
+                        <div class="d-flex align-items-center me-3">
+                            <div style="width: 30px; height: 30px; background: #007bff; border-radius: 5px;"></div>
+                            <span class="ms-2">Selected</span>
+                        </div>
+                        <div class="d-flex align-items-center me-3">
+                            <div style="width: 30px; height: 30px; background: #dc3545; border-radius: 5px;"></div>
+                            <span class="ms-2">Booked</span>
+                        </div>
+                    </div>
+
+                    <div id="seats-grid" class="d-flex flex-wrap justify-content-center" style="max-width: 650px; margin: 0 auto;">
+                        <p class="text-muted">Loading seats...</p>
+                    </div>
+
+                    <div id="selected-info" class="text-center mt-3" style="display: none;">
+                        <div class="alert alert-info">
+                            <strong>Selected Seats:</strong> <span id="selected-seats-list"></span>
+                            <br>
+                            <strong>Total:</strong> ₹<span id="total-price">0</span>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-3">
+                        <button id="book-now-btn" class="btn btn-success btn-lg" onclick="confirmBooking()">
+                            <i class="fas fa-ticket-alt"></i> Confirm Booking
+                        </button>
+                        <a href="{% url 'theater_list' show.movie.id %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Back to Theaters
+                        </a>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
-
-      <!-- Seat Selection -->
-      <div class="card">
-        <div class="card-body">
-          <h5 class="card-title text-center mb-4">Select Your Seats</h5>
-          <div class="screen">All eyes this way please!</div>
-
-          <form method="POST">
-            {% csrf_token %}
-            <div class="d-flex justify-content-center flex-wrap mb-4">
-              {% for seat in seats %}
-              <div class="seat {% if seat.is_booked %}sold{% endif %}">
-                {% if not seat.is_booked %}
-                <input
-                  type="checkbox"
-                  name="seats"
-                  value="{{ seat.id }}"
-                  class="d-none"
-                  id="seat-{{ seat.id }}"
-                />
-                <label
-                  for="seat-{{ seat.id }}"
-                  class="w-100 h-100 d-flex align-items-center justify-content-center"
-                  >{{ seat.seat_number }}</label
-                >
-                {% else %} {{ seat.seat_number }} {% endif %}
-              </div>
-              {% endfor %}
-            </div>
-
-            <!-- Seat Legend -->
-            <div class="d-flex justify-content-center mb-4">
-              <div class="d-flex align-items-center me-4">
-                <div class="seat" style="background-color: white"></div>
-                <span class="ms-2">Available</span>
-              </div>
-              <div class="d-flex align-items-center me-4">
-                <div class="seat selected"></div>
-                <span class="ms-2">Selected</span>
-              </div>
-              <div class="d-flex align-items-center">
-                <div class="seat sold"></div>
-                <span class="ms-2">Sold</span>
-              </div>
-            </div>
-
-            <!-- Book Button -->
-            <div class="text-center">
-              <button type="submit" class="btn btn-success btn-lg">
-                Book Selected Seats
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
-  </div>
 </div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
 <style>
-  body {
-    font-family: Arial, sans-serif;
-  }
-  .seat {
-    width: 30px;
-    height: 30px;
-    border: 1px solid #28a745;
-    margin: 3px;
-    text-align: center;
-    line-height: 30px;
-    cursor: pointer;
-    border-radius: 5px;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  .seat:hover {
-    background-color: #28a745;
-    color: white;
-  }
-  .seat.selected {
-    background-color: #28a745;
-    color: white;
-  }
-  .seat.sold {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-  .screen {
-    margin: 20px 0;
-    background-color: #ccc;
-    height: 50px;
-    text-align: center;
-    line-height: 50px;
-    color: #666;
-  }
-  .footer {
-    background-color: #333;
-    color: #ccc;
-    padding: 20px 0;
-  }
-  .footer a {
-    color: #ccc;
-    text-decoration: none;
-  }
-  .footer a:hover {
-    text-decoration: underline;
-  }
-  .footer .col-md-2,
-  .footer .col-md-3 {
-    margin-bottom: 20px;
-  }
-  .footer .social-icons i {
-    font-size: 20px;
-    margin: 0 10px;
-  }
+    .seat { width: 40px; height: 40px; margin: 4px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: white; cursor: pointer; transition: all 0.3s ease; border: 2px solid transparent; user-select: none; }
+    .seat-available { background-color: #28a745; border-color: #28a745; }
+    .seat-available:hover { transform: scale(1.1); box-shadow: 0 0 15px rgba(40, 167, 69, 0.5); }
+    .seat-selected { background-color: #007bff; border-color: #007bff; transform: scale(1.1); box-shadow: 0 0 15px rgba(0, 123, 255, 0.5); }
+    .seat-booked { background-color: #dc3545; border-color: #dc3545; cursor: not-allowed; opacity: 0.7; }
+    .row-label { width: 30px; font-weight: bold; color: #666; display: flex; align-items: center; justify-content: center; }
+    .seat-row { display: flex; justify-content: center; margin-bottom: 4px; align-items: center; }
 </style>
-<!-- <h1>Seats for {{theater.name}} - {{theater.movie.name}}</h1>
-{% if error %}
-<p style="color:red;">{{error}}</p>
-{% endif %}
-<form method="POST">
-    {% csrf_token %}
-    <ul>
-        {% for seat in seats %}
-        <li>
-          Seats{{seat.seat_number}}:
-          {% if seat.is_booked %}
-          <strong>Booked seat {{seat.seat_number}}</strong>
-          {% else %}
-          <input type="checkbox" name="seats" value="{{seat.id}}">
-          <strong>Available seat {{seat.seat_number}}</strong>
-          {% endif%}
-        </li>
-        {% endfor %}
-      </ul>
-      <button type="submit">Book selected seats</button>
-</form> -->
+
+<script>
+    console.log('🚀 Seat Selection Page Loaded!');
+    console.log('Show ID:', {{ show.id }});
+    
+    const showId = {{ show.id }};
+    let selectedSeats = [];
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSeats();
+    });
+
+    function loadSeats() {
+        const grid = document.getElementById('seats-grid');
+        grid.innerHTML = '<p class="text-muted">Loading seats...</p>';
+        
+        fetch(`/movies/api/seat-availability/${showId}/`)
+            .then(response => response.json())
+            .then(data => {
+                console.log('✅ Seat data received:', data);
+                renderSeats(data);
+                updateStats(data);
+            })
+            .catch(error => {
+                console.error('❌ Error loading seats:', error);
+                grid.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${error.message}</div>`;
+            });
+    }
+
+    function renderSeats(data) {
+        const grid = document.getElementById('seats-grid');
+        grid.innerHTML = '';
+        
+        if (!data.seats || data.seats.length === 0) {
+            grid.innerHTML = '<p class="text-muted">No seats available.</p>';
+            return;
+        }
+        
+        const rows = {};
+        data.seats.forEach(seat => {
+            const match = seat.number.match(/^([A-Z]+)/);
+            const row = match ? match[1] : '?';
+            if (!rows[row]) rows[row] = [];
+            rows[row].push(seat);
+        });
+        
+        const sortedRows = Object.keys(rows).sort();
+        sortedRows.forEach(row => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'seat-row';
+            
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.textContent = row;
+            rowDiv.appendChild(label);
+            
+            rows[row].forEach(seat => {
+                const seatDiv = document.createElement('div');
+                const status = seat.status.toLowerCase();
+                seatDiv.className = `seat seat-${status}`;
+                seatDiv.textContent = seat.number;
+                seatDiv.dataset.seatId = seat.id;
+                seatDiv.dataset.seatNumber = seat.number;
+                seatDiv.dataset.status = seat.status;
+                
+                if (seat.status === 'AVAILABLE') {
+                    seatDiv.addEventListener('click', function() {
+                        toggleSeat(this);
+                    });
+                }
+                
+                rowDiv.appendChild(seatDiv);
+            });
+            
+            grid.appendChild(rowDiv);
+        });
+    }
+
+    function toggleSeat(element) {
+        const seatId = parseInt(element.dataset.seatId);
+        const seatNumber = element.dataset.seatNumber;
+        
+        const index = selectedSeats.findIndex(s => s.id === seatId);
+        
+        if (index !== -1) {
+            selectedSeats.splice(index, 1);
+            element.classList.remove('seat-selected');
+            element.classList.add('seat-available');
+        } else {
+            if (selectedSeats.length >= 10) {
+                alert('You can select maximum 10 seats.');
+                return;
+            }
+            selectedSeats.push({id: seatId, number: seatNumber});
+            element.classList.remove('seat-available');
+            element.classList.add('seat-selected');
+        }
+        
+        updateSelectedInfo();
+    }
+
+    function updateSelectedInfo() {
+        const info = document.getElementById('selected-info');
+        const list = document.getElementById('selected-seats-list');
+        const total = document.getElementById('total-price');
+        const bookBtn = document.getElementById('book-now-btn');
+        
+        if (selectedSeats.length === 0) {
+            info.style.display = 'none';
+            bookBtn.disabled = true;
+            return;
+        }
+        
+        info.style.display = 'block';
+        list.textContent = selectedSeats.map(s => s.number).join(', ');
+        total.textContent = (selectedSeats.length * {{ show.price }}).toFixed(2);
+        bookBtn.disabled = false;
+    }
+
+    function updateStats(data) {
+        document.getElementById('available-count').textContent = data.available_count || 0;
+    }
+
+    // ✅ THIS IS THE FIXED VERSION - ALWAYS REDIRECTS
+    function confirmBooking() {
+        if (selectedSeats.length === 0) {
+            alert('Please select at least one seat.');
+            return;
+        }
+        
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+        const seatIds = selectedSeats.map(s => s.id);
+        const totalPrice = selectedSeats.length * {{ show.price }};
+        
+        const bookBtn = document.getElementById('book-now-btn');
+        bookBtn.disabled = true;
+        bookBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        fetch(`/movies/api/confirm-reservation/${showId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ reservation_ids: seatIds })
+        })
+        .then(response => response.json())
+        .then(data => {
+            // ✅ ALWAYS redirect to my-bookings - THIS BREAKS THE LOOP!
+            if (data.success) {
+                alert(`✅ Booking confirmed!\n\nSeats: ${selectedSeats.map(s => s.number).join(', ')}\nTotal: ₹${totalPrice}`);
+            } else {
+                alert('⚠️ Booking note: ' + (data.error || 'Unknown error'));
+            }
+            // ✅ FORCE REDIRECT - The loop ends here!
+            window.location.href = "{% url 'my_bookings' %}";
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Error: ' + error.message);
+            // ✅ FORCE REDIRECT even on error
+            window.location.href = "{% url 'my_bookings' %}";
+        });
+    }
+</script>
 
 {% endblock %}

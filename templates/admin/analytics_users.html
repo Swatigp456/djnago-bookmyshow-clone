@@ -1,0 +1,179 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+<script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+<style>
+    .chart-container {
+        position: relative;
+        height: 400px;
+        width: 100%;
+        margin: 20px 0;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .no-data {
+        padding: 50px;
+        text-align: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>👥 User Growth Analytics</h1>
+        <div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">← Back to Dashboard</a>
+            <a href="{% url 'export_csv_report' %}?type=user_growth" class="btn btn-success">📥 Export CSV</a>
+        </div>
+    </div>
+
+    <!-- User Growth Chart -->
+    <div class="card">
+        <div class="card-header">
+            <h5>📈 User Growth Trends</h5>
+        </div>
+        <div class="card-body">
+            <div class="chart-container" id="userGrowthChartContainer">
+                <div id="userGrowthChart" style="height: 100%; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Statistics -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h5>Total Users</h5>
+                    <h2>{{ user_growth.total_users|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h5>New Users</h5>
+                    <h2>{{ user_growth.daily_growth|length|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h5>Total Registrations</h5>
+                    <h2>{{ user_growth.total_users|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Growth Data Table -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5>📊 Daily User Registrations</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>New Users</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in user_growth.daily_growth %}
+                        <tr>
+                            <td>{{ item.date|date:"M d, Y" }}</td>
+                            <td><span class="badge bg-success">{{ item.new_users }}</span></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="2" class="text-center">No user data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 User Growth Chart Initializing...');
+    
+    var userGrowth = {{ user_growth|safe }};
+    var dailyData = userGrowth.daily_growth || [];
+    
+    console.log('📊 User Data:', dailyData);
+    
+    if (!dailyData || dailyData.length === 0) {
+        document.getElementById('userGrowthChartContainer').innerHTML = 
+            '<div class="no-data"><h4>📭 No User Data Available</h4></div>';
+        return;
+    }
+    
+    if (typeof CanvasJS === 'undefined') {
+        document.getElementById('userGrowthChartContainer').innerHTML = 
+            '<div class="alert alert-danger">CanvasJS library not loaded.</div>';
+        return;
+    }
+    
+    var dataPoints = [];
+    
+    for (var i = 0; i < dailyData.length; i++) {
+        var item = dailyData[i];
+        var date = new Date(item.date);
+        var label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        
+        dataPoints.push({
+            label: label,
+            y: item.new_users || 0
+        });
+    }
+    
+    try {
+        var chart = new CanvasJS.Chart("userGrowthChart", {
+            animationEnabled: true,
+            title: {
+                text: "User Registrations Over Time"
+            },
+            axisX: {
+                title: "Date",
+                interval: 1,
+                labelAngle: -30
+            },
+            axisY: {
+                title: "New Users",
+                includeZero: true
+            },
+            data: [{
+                type: "column",
+                name: "New Users",
+                showInLegend: true,
+                color: "#28a745",
+                dataPoints: dataPoints
+            }]
+        });
+        
+        chart.render();
+        console.log('✅ User growth chart created!');
+        
+    } catch (error) {
+        console.error('❌ Chart error:', error);
+        document.getElementById('userGrowthChartContainer').innerHTML = 
+            '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+    }
+});
+</script>
+{% endblock %}

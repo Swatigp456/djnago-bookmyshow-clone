@@ -1,0 +1,48 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>🎬 Top Movies</h1>
+        <div>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">← Back to Dashboard</a>
+            <a href="{% url 'export_csv_report' %}?type=top_movies" class="btn btn-success">📥 Export CSV</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Most Booked Movies</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Movie</th>
+                            <th>Total Bookings</th>
+                            <th>Revenue</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for movie in top_movies %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ movie.show__movie__name }}</td>
+                            <td>{{ movie.total_bookings }}</td>
+                            <td>₹{{ movie.total_revenue|floatformat:2 }}</td>
+                            <td>⭐ {{ movie.avg_rating|floatformat:1|default:"N/A" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5">No movie data available</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

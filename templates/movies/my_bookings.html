@@ -1,0 +1,127 @@
+{% extends "users/basic.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="fas fa-ticket-alt"></i> My Bookings</h2>
+    
+    <!-- Filter -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <form method="GET">
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Bookings</option>
+                    <option value="CONFIRMED" {% if status_filter == 'CONFIRMED' %}selected{% endif %}>Confirmed</option>
+                    <option value="PENDING" {% if status_filter == 'PENDING' %}selected{% endif %}>Pending</option>
+                    <option value="CANCELLED" {% if status_filter == 'CANCELLED' %}selected{% endif %}>Cancelled</option>
+                </select>
+            </form>
+        </div>
+    </div>
+    
+    {% for booking in bookings %}
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h5>{{ booking.show.movie.name }}</h5>
+                        <p>
+                            <strong>Theater:</strong> {{ booking.show.screen.theater.name }}<br>
+                            <strong>Date:</strong> {{ booking.show.show_date|date:"M d, Y" }}<br>
+                            <strong>Time:</strong> {{ booking.show.show_time|time:"g:i A" }}<br>
+                            <strong>Seats:</strong> {{ booking.seats }}<br>
+                            <strong>Total:</strong> ₹{{ booking.total_price }}
+                        </p>
+                        <span class="badge bg-{% if booking.status == 'CONFIRMED' %}success{% elif booking.status == 'CANCELLED' %}danger{% else %}warning{% endif %}">
+                            {{ booking.get_status_display }}
+                        </span>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <!-- ============================================ -->
+                        <!-- ✅ PAYMENT BUTTONS                           -->
+                        <!-- ============================================ -->
+                        <div class="mt-2">
+                            {% if booking.status == 'PENDING' %}
+                                <a href="{% url 'initiate_payment' booking.id %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-credit-card"></i> Pay Now
+                                </a>
+                                <button onclick="retryPayment({{ booking.id }})" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-redo"></i> Retry
+                                </button>
+                            {% endif %}
+                            <a href="{% url 'payment_history' %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-history"></i> Payment History
+                            </a>
+                        </div>
+                        <!-- ============================================ -->
+                        
+                        <!-- ============================================ -->
+                        <!-- ✅ TICKET BUTTONS (TASK 6)                   -->
+                        <!-- ============================================ -->
+                        <div class="mt-2">
+                            {% if booking.status == 'CONFIRMED' %}
+                                <a href="{% url 'download_ticket' booking.id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-download"></i> Download Ticket
+                                </a>
+                                <a href="{% url 'view_ticket' booking.id %}" class="btn btn-sm btn-info" target="_blank">
+                                    <i class="fas fa-eye"></i> View Ticket
+                                </a>
+                                {% if booking.ticket and booking.ticket.status == 'EMAIL_FAILED' %}
+                                    <a href="{% url 'resend_ticket_email' booking.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-redo"></i> Resend Email
+                                    </a>
+                                {% endif %}
+                                {% if booking.ticket %}
+                                    <span class="badge bg-{% if booking.ticket.status == 'EMAIL_SENT' %}success{% elif booking.ticket.status == 'EMAIL_FAILED' %}danger{% else %}warning{% endif %}">
+                                        Ticket: {{ booking.ticket.get_status_display }}
+                                    </span>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <!-- ============================================ -->
+                        
+                        {% if booking.status == 'PENDING' %}
+                            <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger btn-sm mt-1" onclick="return confirm('Cancel this booking?')">Cancel</a>
+                        {% endif %}
+                        <a href="{% url 'movie_detail' booking.show.movie.id %}" class="btn btn-info btn-sm mt-1">View Movie</a>
+                        {% if booking.can_review %}
+                            <a href="{% url 'movie_detail' booking.show.movie.id %}#review-section" class="btn btn-warning btn-sm mt-1">Write Review</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="alert alert-info">You have no bookings yet.</div>
+    {% endfor %}
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+
+<script>
+    function retryPayment(bookingId) {
+        if (!confirm('Retry payment for this booking?')) return;
+        
+        fetch(`/movies/payment/retry/${bookingId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Redirecting to payment...');
+                window.location.href = `/movies/payment/${bookingId}/`;
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+    
+    function getCsrfToken() {
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+</script>
+{% endblock %}
