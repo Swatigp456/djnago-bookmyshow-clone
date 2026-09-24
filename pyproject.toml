@@ -18,9 +18,3 @@ dependencies = [
   "django-cloudinary-storage",
 ]
 
-[tool.vercel]
-entrypoint = "bookmyseat.wsgi:application"
-
-[[tool.vercel.subscribers]]
-entrypoint = "bookmyseat.celery_app:app"
-topics = ["celery"]
