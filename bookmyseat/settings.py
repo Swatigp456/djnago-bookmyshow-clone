@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY
-SECRET_KEY = config('SECRET_KEY')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-build-time-key-replace-me')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = ['.vercel.app', 'localhost', '127.0.0.1']
 
