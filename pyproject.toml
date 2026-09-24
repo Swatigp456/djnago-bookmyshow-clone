@@ -1,0 +1,26 @@
+[project]
+name = "bookmyseat"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+  "django",
+  "celery>=5.3.0",
+  "redis",
+  "reportlab",
+  "qrcode",
+  "pillow",
+  "razorpay",
+  "python-decouple",
+  "dj-database-url",
+  "psycopg2-binary",
+  "whitenoise",
+  "cloudinary",
+  "django-cloudinary-storage",
+]
+
+[tool.vercel]
+entrypoint = "bookmyseat.wsgi:application"
+
+[[tool.vercel.subscribers]]
+entrypoint = "bookmyseat.celery_app:app"
+topics = ["celery"]
