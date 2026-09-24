@@ -73,11 +73,14 @@ WSGI_APPLICATION = 'bookmyseat.wsgi.application'
 # Database
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3'),
+        default=(
+            os.environ.get('POSTGRES_URL')
+            or os.environ.get('DATABASE_URL')
+            or 'sqlite:///db.sqlite3'
+        ),
         conn_max_age=600,
     )
 }
-
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
