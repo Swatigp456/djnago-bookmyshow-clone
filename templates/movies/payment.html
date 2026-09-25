@@ -90,7 +90,7 @@
             description: "Movie Ticket Booking",
             image: "https://via.placeholder.com/100x100?text=BMS",
             order_id: "{{ order_id }}",
-            "callback_url": "http://127.0.0.1:8000/movies/payment/success/",
+            "callback_url": window.location.origin + "/movies/payment/success/",
             "redirect": true,
             handler: function(response) {
                 console.log('✅ Payment successful:', response);
