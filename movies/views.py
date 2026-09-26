@@ -691,32 +691,35 @@ def release_seats(request, show_id):
 @login_required
 def initiate_payment(request, booking_id):
     """Initiate payment for a booking"""
-    print("=" * 50)
-    print("🔍 PAYMENT INITIATED")
-    print("=" * 50)
-    print(f"Booking ID: {booking_id}")
-    print(f"User: {request.user}")
-    
-    booking = get_object_or_404(ShowBooking, id=booking_id)
-    print(f"Booking Status: {booking.status}")
-    print(f"Booking Total: {booking.total_price}")
-    
-    # Check if booking is already confirmed
+    print("=" * 60)
+    print("INITIATE_PAYMENT CALLED")
+    print("Booking ID from URL:", booking_id)
+    print("Logged-in user:", request.user.username)
+    print("=" * 60)
+
+    try:
+        booking = ShowBooking.objects.get(id=booking_id)
+        print("✅ Booking found:", booking.id, "| status:", booking.status)
+    except ShowBooking.DoesNotExist:
+        print("❌ Booking NOT FOUND for id:", booking_id)
+        messages.error(request, "Booking not found")
+        return redirect('my_bookings')
+
     if booking.status == 'CONFIRMED':
+        print("❌ REDIRECT #1: Booking already CONFIRMED")
         messages.info(request, 'This booking is already confirmed.')
         return redirect('my_bookings')
-    
-    # Check if payment already exists
+
     existing_payment = Payment.objects.filter(booking=booking).first()
+    print("Existing payment:", existing_payment)
     if existing_payment and existing_payment.payment_status == 'SUCCESS':
+        print("❌ REDIRECT #2: Payment already SUCCESS")
         messages.info(request, 'Payment already completed for this booking.')
         return redirect('my_bookings')
-    
-    # Initialize Razorpay client
+
+    print("✅ Checks passed. Creating Razorpay order...")
+
     client = RazorpayClient()
-    print(f"✅ Razorpay Client Initialized")
-    
-    # Create order
     order_data = client.create_order(
         amount=float(booking.total_price),
         currency="INR",
@@ -724,18 +727,16 @@ def initiate_payment(request, booking_id):
         notes={
             'booking_id': str(booking.id),
             'user_id': str(request.user.id),
-            'user_email': request.user.email or 'guest@example.com'
         }
     )
-    
-    print(f"Order Data: {order_data}")
-    
+
+    print("Order Data:", order_data)
+
     if not order_data['success']:
-        print(f"❌ Order creation failed: {order_data.get('error', 'Unknown error')}")
-        messages.error(request, f"Payment initiation failed: {order_data.get('error', 'Unknown error')}")
+        print("❌ REDIRECT #3: Order creation failed:", order_data.get('error'))
+        messages.error(request, f"Payment failed: {order_data.get('error')}")
         return redirect('my_bookings')
-    
-    # Create payment record
+
     payment = Payment.objects.create(
         user=request.user,
         booking=booking,
@@ -744,24 +745,22 @@ def initiate_payment(request, booking_id):
         payment_status='PENDING',
         razorpay_order_id=order_data['order_id']
     )
-    
-    print(f"✅ Payment Record Created: {payment.id}")
-    print(f"Order ID: {order_data['order_id']}")
-    print(f"Razorpay Key ID: {settings.RAZORPAY_KEY_ID}")
-    
+
+    print("✅ Payment record created:", payment.id)
+    print("✅ Rendering payment page")
+
     context = {
         'booking': booking,
         'payment': payment,
         'razorpay_key_id': settings.RAZORPAY_KEY_ID,
         'order_id': order_data['order_id'],
-        'amount': int(booking.total_price * 100),
+        'amount': booking.total_price,
         'user_name': request.user.username,
         'user_email': request.user.email or 'guest@example.com',
         'user_phone': '9999999999',
     }
-    
-    return render(request, 'movies/payment.html', context)
 
+    return render(request, 'movies/payment.html', context)
 @csrf_exempt
 @login_required
 @require_POST
