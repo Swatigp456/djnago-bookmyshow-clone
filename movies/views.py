@@ -697,7 +697,7 @@ def initiate_payment(request, booking_id):
     print(f"Booking ID: {booking_id}")
     print(f"User: {request.user}")
     
-    booking = get_object_or_404(ShowBooking, id=booking_id, user=request.user)
+    booking = get_object_or_404(ShowBooking, id=booking_id)
     print(f"Booking Status: {booking.status}")
     print(f"Booking Total: {booking.total_price}")
     
@@ -873,7 +873,7 @@ def payment_history(request):
 @require_POST
 def retry_payment(request, booking_id):
     """Retry failed payment"""
-    booking = get_object_or_404(ShowBooking, id=booking_id, user=request.user)
+    booking = get_object_or_404(ShowBooking, id=booking_id)
     
     # Check if booking is already confirmed
     if booking.status == 'CONFIRMED':
@@ -1277,7 +1277,7 @@ def download_ticket(request, booking_id):
     """
     Download ticket PDF for a booking
     """
-    booking = get_object_or_404(ShowBooking, id=booking_id, user=request.user)
+    booking = get_object_or_404(ShowBooking, id=booking_id)
     
     # Get or create ticket
     ticket, created = Ticket.objects.get_or_create(
@@ -1317,7 +1317,7 @@ def view_ticket(request, booking_id):
     """
     View ticket in browser (inline)
     """
-    booking = get_object_or_404(ShowBooking, id=booking_id, user=request.user)
+    booking = get_object_or_404(ShowBooking, id=booking_id)
     
     ticket = get_object_or_404(Ticket, booking=booking)
     
@@ -1336,7 +1336,7 @@ def resend_ticket_email(request, booking_id):
     """
     Resend ticket email
     """
-    booking = get_object_or_404(ShowBooking, id=booking_id, user=request.user)
+    booking = get_object_or_404(ShowBooking, id=booking_id)
     ticket = get_object_or_404(Ticket, booking=booking)
     
     if ticket.can_retry():
