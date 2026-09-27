@@ -350,8 +350,8 @@ pip install cloudinary django-cloudinary-storage
 ### Admin Dashboard
 ![Admin](screenshots/admin.png)
 
-### Email Confirmation
-![Email](screenshots/email.png)
+### analytics
+![Analytics](screenshots/analytics.png)
 ---
 
 ## 👤 Author
