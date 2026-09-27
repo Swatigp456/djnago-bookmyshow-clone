@@ -8,7 +8,7 @@
         <div class="col-md-4">
             <!-- UPDATED: Added image check with placeholder -->
             {% if movie.image and movie.image.url %}
-                <img src="{{ movie.image.url }}" class="img-fluid rounded" alt="{{ movie.name }}">
+                <img src="{{ movie.image }}" class="img-fluid rounded" alt="{{ movie.name }}">
             {% else %}
                 <div style="height: 400px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 72px; font-weight: bold; border-radius: 8px;">
                     {{ movie.name|slice:":2"|upper }}
@@ -193,7 +193,7 @@
                         <div class="col-4">
                             <!-- UPDATED: Added image check for similar movies -->
                             {% if similar_movie.image and similar_movie.image.url %}
-                                <img src="{{ similar_movie.image.url }}" class="img-fluid rounded-start" alt="{{ similar_movie.name }}" style="height: 80px; width: 100%; object-fit: cover;">
+                                <img src="{{ similar_movie.image }}" class="img-fluid rounded-start" alt="{{ similar_movie.name }}" style="height: 80px; width: 100%; object-fit: cover;">
                             {% else %}
                                 <div style="height: 80px; width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-size: 20px; font-weight: bold;">
                                     {{ similar_movie.name|slice:":2"|upper }}
