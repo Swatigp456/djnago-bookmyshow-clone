@@ -5,8 +5,6 @@ A full-stack Django application for browsing movies, booking seats, paying onlin
 **Live Demo:** [djnago-bookmyshow-clone-eight.vercel.app](https://djnago-bookmyshow-clone-eight.vercel.app/)
 
 **Admin Panel:** [/admin/](https://djnago-bookmyshow-clone-eight.vercel.app/admin/)
-- Username: `swati10`
-- Password: `Admin@1234`
 
 ---
 
@@ -330,8 +328,6 @@ pip install cloudinary django-cloudinary-storage
 ```
 
 ---
-
-## 📸 Screenshots
 
 ## 📸 Screenshots
 
