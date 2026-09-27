@@ -333,13 +333,25 @@ pip install cloudinary django-cloudinary-storage
 
 ## 📸 Screenshots
 
-_screenshots here:_
-- Home page with movie catalog
-- Seat selection UI
-- Razorpay payment page
-- PDF ticket with QR code
-- Admin dashboard with analytics
+## 📸 Screenshots
 
+### Home Page
+![Home](screenshots/home.png)
+
+### Seat Selection
+![Seat](screenshots/seat.png)
+
+### Razorpay Payment
+![Payment](screenshots/payment.png)
+
+### PDF Ticket with QR Code
+![Ticket](screenshots/ticket.png)
+
+### Admin Dashboard
+![Admin](screenshots/admin.png)
+
+### Email Confirmation
+![Email](screenshots/email.png)
 ---
 
 ## 👤 Author
